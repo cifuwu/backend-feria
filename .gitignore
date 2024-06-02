@@ -1,0 +1,18 @@
+# carpeta .venv del entorno virtual
+
+.venv
+
+# archivo sqlite3
+
+staticfiles
+
+db
+#db.sqlite3
+
+# ds_store mac
+.DS_Store
+
+.vscode
+
+
+__pycache__
