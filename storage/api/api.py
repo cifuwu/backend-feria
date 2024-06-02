@@ -70,4 +70,16 @@ class imagenAPI(APIView):
 
 
         return Response(imagenes_paginadas, status=status.HTTP_200_OK)
+    
+
+    def post(self, request):
+        data = request.data 
+
+        fotos_serializadas = ImagenSerializer(data=data)
+
+        if  fotos_serializadas.is_valid():
+            fotos_serializadas.save()
+
+            return Response( {"code": 201, "data": fotos_serializadas.data}, status=status.HTTP_201_CREATED)
+        return Response( {"code": 400, "errores": fotos_serializadas.errors}, status=status.HTTP_400_BAD_REQUEST)
         

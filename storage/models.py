@@ -8,7 +8,6 @@ import base64
 # Create your models here.
 
 
-
 class Imagen(models.Model):
 	imagen = models.ImageField(upload_to='imagenes')
 	miniatura = models.ImageField(upload_to='imagenes', blank=True, null=True)
@@ -20,7 +19,15 @@ class Imagen(models.Model):
 	width = models.IntegerField('ancho', null=True, blank=True)
 	height = models.IntegerField('alto', null=True, blank=True)
 
+	descripcion = models.CharField('descripcion', default='', max_length=300)
+
 	blurBase64 = models.CharField('blur', null=True, blank=True, max_length=800)
+
+
+	class Meta:
+		verbose_name = 'Imagen'
+		verbose_name_plural = 'Imagenes'
+		ordering = ['-id']  
 
 
 	def save(self, *args, **kwargs):
