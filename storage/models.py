@@ -3,10 +3,23 @@ from PIL import Image
 from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import base64
+from django.core.exceptions import ValidationError
 
 
 # Create your models here.
 
+
+def validate_video_file(file):
+    valid_mime_types = ['video/mp4', 'video/avi', 'video/mov', 'video/mpeg']
+    file_mime_type = file.file.content_type
+    if file_mime_type not in valid_mime_types:
+        raise ValidationError('Unsupported file type. Only MP4, AVI, MOV, and MPEG are allowed.')
+
+class Video(models.Model):
+	video = models.FileField(upload_to='videos/')
+	descripcion = models.CharField('descripcion', default='', max_length=300)
+
+		
 
 class Imagen(models.Model):
 	imagen = models.ImageField(upload_to='imagenes')

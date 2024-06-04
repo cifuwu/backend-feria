@@ -1,10 +1,10 @@
 from rest_framework import status
-from .serializers import (ImagenSerializer)
+from .serializers import ImagenSerializer, VideoSerializer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from django.core.paginator import InvalidPage
-from storage.models import Imagen
+from storage.models import Imagen, Video
 
 
 
@@ -82,4 +82,106 @@ class imagenAPI(APIView):
 
             return Response( {"code": 201, "data": fotos_serializadas.data}, status=status.HTTP_201_CREATED)
         return Response( {"code": 400, "errores": fotos_serializadas.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+    def delete(self, request, pk=None):
+        if(pk!=None):
+            try:
+                instancia = Imagen.objects.get(pk=pk)
+                instancia.delete()
+                return Response({'code': 200, 'data':'imagen eliminada correctamente'},status=status.HTTP_200_OK)
+            except Imagen.DoesNotExist:
+                return Response({'code': 400, 'data':'imagen no encontrada'},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'code': 400, 'data':'indique el id de la imagen'},status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+PAGE_SIZE_VIDEOS = 20
+
+class CustomPaginationVideo(PageNumberPagination):
+    page_size = PAGE_SIZE_VIDEOS
+    page_size_query_param = 'page_size'
+    max_page_size = 200
+
+    def paginate_queryset(self, queryset, request):
+        page_size = self.get_page_size(request)
+        if not page_size:
+            return None
+        
+        paginator = self.django_paginator_class(queryset, page_size)
+        page_number = self.get_page_number(request, paginator)
+
+        #cantidad de páginas
+        paginas = paginator.num_pages
+
+        #cantidad de items por página
+        largo_pagina = page_size
+
+        #número de página actual
+        pagina_actual = int(page_number)
+
+        try:
+            self.page = paginator.page(page_number)
+        except InvalidPage as exc:
+            return {"code": 400, "data": "pagina inválida", "paginas": paginas, "pagina_actual": pagina_actual, "videos": []}
+
+        if paginator.num_pages > 1 and self.template is not None:
+            # The browsable API should display pagination controls.
+            self.display_page_controls = True
+
+
+        videos_serializados = VideoSerializer(list(self.page), many=True)
+
+
+        data = {
+            "code": 200,
+            "paginas": paginas,
+            "pagina_actual": pagina_actual,
+            "largo_pagina": largo_pagina,
+            "videos": videos_serializados.data
+        }
+        self.request = request
+        return data
+      
+
+
+class videoAPI(APIView):
+    pagination_class = CustomPaginationVideo
+
+    def get(self, request, pk=None):
+
+        videos = Video.objects.all()
+
+
+        videos_paginados = self.pagination_class().paginate_queryset(videos, request)
+
+
+        return Response(videos_paginados, status=status.HTTP_200_OK)
+    
+
+    def post(self, request):
+        data = request.data 
+
+        print(data)
+
+        videos_serializados = VideoSerializer(data=data)
+
+        if videos_serializados.is_valid():
+            videos_serializados.save()
+
+            return Response( {"code": 201, "data": videos_serializados.data}, status=status.HTTP_201_CREATED)
+        return Response( {"code": 400, "errores": videos_serializados.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+    def delete(self, request, pk=None):
+        if(pk!=None):
+            try:
+                instancia = Video.objects.get(pk=pk)
+                instancia.delete()
+                return Response({'code': 200, 'data':'video eliminado correctamente'},status=status.HTTP_200_OK)
+            except Imagen.DoesNotExist:
+                return Response({'code': 400, 'data':'video no encontrado'},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'code': 400, 'data':'indique el id del video'},status=status.HTTP_400_BAD_REQUEST)
         
