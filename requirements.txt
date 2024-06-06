@@ -1,3 +1,6 @@
 django==4.2.13
 djangorestframework==3.15.1
 pillow==10.3.0
+
+## permite configurar los CORS
+django-cors-headers == 3.13.0

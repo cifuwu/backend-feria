@@ -163,8 +163,6 @@ class videoAPI(APIView):
     def post(self, request):
         data = request.data 
 
-        print(data)
-
         videos_serializados = VideoSerializer(data=data)
 
         if videos_serializados.is_valid():
