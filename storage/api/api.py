@@ -5,6 +5,58 @@ from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from django.core.paginator import InvalidPage
 from storage.models import Imagen, Video
+import mimetypes
+
+
+
+
+
+
+
+class FileUploadAPI(APIView):
+    def post(self, request, *args, **kwargs):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        mime_type, _ = mimetypes.guess_type(file.name)
+        if not mime_type:
+            return Response({'error': 'Cannot determine file type'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if mime_type.startswith('image'):
+            print('imagen')
+
+            foto_serializada = ImagenSerializer(data={'imagen': file})
+
+            if  foto_serializada.is_valid():
+                foto_serializada.save()
+
+                return Response( {"code": 201, "data": foto_serializada.data}, status=status.HTTP_201_CREATED)
+            
+            print(foto_serializada.errors)
+            
+            return Response( {"code": 400, "errores": foto_serializada.errors}, status=status.HTTP_400_BAD_REQUEST)
+            
+            
+        elif mime_type.startswith('video'):
+            print('video')
+
+            video_serializado = VideoSerializer(data={'video': file})
+
+            if  video_serializado.is_valid():
+                video_serializado.save()
+
+                return Response( {"code": 201, "data": video_serializado.data}, status=status.HTTP_201_CREATED)
+            
+            print(video_serializado.errors)
+            
+            return Response( {"code": 400, "errores": video_serializado.errors}, status=status.HTTP_400_BAD_REQUEST)
+            
+
+        elif mime_type.startswith('audio'):
+            print('audio')
+        else:
+            print('archivo desconocido')
 
 
 
