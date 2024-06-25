@@ -1,5 +1,18 @@
 from rest_framework import serializers
-from storage.models import Imagen, Video, Miniatura
+from storage.models import Imagen, Video, Miniatura, Audio
+
+
+
+class AudioSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Audio
+        fields = '__all__'
+    
+    def create(self, validated_data):
+        archivo = validated_data.get('audio')
+        validated_data['nombre'] = archivo.name
+        return super().create(validated_data)
 
 
 class ImagenSerializer(serializers.ModelSerializer):

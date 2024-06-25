@@ -25,7 +25,7 @@ class Imagen(models.Model):
 
 	descripcion = models.CharField('descripcion', default='', max_length=300)
 
-	nombre = models.CharField('nombre', default='', max_length=50)
+	nombre = models.CharField('nombre', default='', max_length=200)
 
 	blurBase64 = models.CharField('blur', null=True, blank=True, max_length=800)
 
@@ -177,53 +177,69 @@ class Miniatura(models.Model):
 
 
 def validate_video_file(file):
-    valid_mime_types = ['video/mp4', 'video/avi', 'video/mov', 'video/mpeg']
-    file_mime_type = file.file.content_type
-    if file_mime_type not in valid_mime_types:
-        raise ValidationError('Unsupported file type. Only MP4, AVI, MOV, and MPEG are allowed.')
+		valid_mime_types = ['video/mp4', 'video/avi', 'video/mov', 'video/mpeg']
+		file_mime_type = file.file.content_type
+		if file_mime_type not in valid_mime_types:
+				raise ValidationError('Unsupported file type. Only MP4, AVI, MOV, and MPEG are allowed.')
 
 class Video(models.Model):
-    video = models.FileField(upload_to='videos/')
+		video = models.FileField(upload_to='videos/')
+		descripcion = models.CharField('descripcion', default='', max_length=300)
+		nombre = models.CharField('nombre', default='', max_length=200)
+		miniatura = models.ForeignKey(Miniatura, null=True, blank=True, on_delete=models.SET_NULL)
+
+		def create_thumbnail(self):
+				if not self.video:
+						return
+				
+				video_path = self.video.path
+
+				# Use moviepy to extract a frame from the video
+				clip = VideoFileClip(video_path)
+				frame = clip.get_frame(1.00)  # Get frame at 1 second
+				image = Image.fromarray(frame)
+
+				# Save the image to a BytesIO object
+				thumb_io = io.BytesIO()
+				image.save(thumb_io, format='webp')
+
+				# Create a ContentFile from the BytesIO object
+				thumb_file = ContentFile(thumb_io.getvalue(), 'miniatura.webp')
+
+				aux = Miniatura(imagen=thumb_file, nombre=f'{self.id}_miniatura.webp')
+				aux.save()
+				
+				self.miniatura=aux
+				self.save()
+				
+				thumb_io.close()
+
+
+		def save(self, *args, **kwargs):
+				
+				# First save to ensure the instance has an ID
+				if not self.pk:
+						super().save(*args, **kwargs)
+
+				# Then create the thumbnail
+				if not self.miniatura:
+						self.create_thumbnail()
+
+				# Save again to update the instance with the thumbnail
+				super().save(*args, **kwargs)	
+
+
+
+
+class Audio(models.Model):
+    audio = models.FileField(upload_to='audios/')
     descripcion = models.CharField('descripcion', default='', max_length=300)
-    nombre = models.CharField('nombre', default='', max_length=50)
-    miniatura = models.ForeignKey(Miniatura, null=True, blank=True, on_delete=models.SET_NULL)
+    nombre = models.CharField('nombre', default='', max_length=200)
+		
+	# class Meta:
+	# 	verbose_name = 'Audio'
+	# 	verbose_name_plural = 'Audios'
+	# 	ordering = ['-id']  
 
-    def create_thumbnail(self):
-        if not self.video:
-            return
-        
-        video_path = self.video.path
-
-        # Use moviepy to extract a frame from the video
-        clip = VideoFileClip(video_path)
-        frame = clip.get_frame(1.00)  # Get frame at 1 second
-        image = Image.fromarray(frame)
-
-        # Save the image to a BytesIO object
-        thumb_io = io.BytesIO()
-        image.save(thumb_io, format='webp')
-
-        # Create a ContentFile from the BytesIO object
-        thumb_file = ContentFile(thumb_io.getvalue(), 'miniatura.webp')
-
-        aux = Miniatura(imagen=thumb_file, nombre=f'{self.id}_miniatura.webp')
-        aux.save()
-        
-        self.miniatura=aux
-        self.save()
-        
-        thumb_io.close()
-
-
-    def save(self, *args, **kwargs):
-        
-        # First save to ensure the instance has an ID
-        if not self.pk:
-            super().save(*args, **kwargs)
-
-        # Then create the thumbnail
-        if not self.miniatura:
-            self.create_thumbnail()
-
-        # Save again to update the instance with the thumbnail
-        super().save(*args, **kwargs)	
+	
+	
